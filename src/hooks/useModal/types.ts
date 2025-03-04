@@ -2,7 +2,15 @@ export type ModalType = 'modal' | 'drawer';
 
 export type ModalAction = 'end' | 'cancel';
 
-export type ModalRefOption<P extends ModalType, T, U> = {
+export type ModalTypeMap = Record<
+	ModalType,
+	{
+		visible: string;
+		onClose: string;
+	}
+>;
+
+export type ModalHooksOption<P extends ModalType, T, U> = {
 	beforeModal?: (
 		data: Partial<T>,
 		pause: (result: any, isError?: boolean) => void,
@@ -35,7 +43,7 @@ export interface ModalRef<P extends ModalType, T, U> {
 	readonly visible: boolean;
 	readonly data: Partial<T>;
 	readonly props: ModalPropsTypeMap[P];
-	readonly options: ModalRefOption<P, T, U>;
+	readonly options: ModalHooksOption<P, T, U>;
 	readonly modalPromise: null | Promise<U> | PromiseLike<U>;
 
 	modal(newData: T): Promise<U>;

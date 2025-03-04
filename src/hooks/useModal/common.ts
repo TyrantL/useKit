@@ -8,19 +8,14 @@ import {
 import { isFunction } from '../utils';
 import type {
 	ModalAction,
+	ModalHooksOption,
 	ModalPropsTypeMap,
 	ModalRef,
-	ModalRefOption,
 	ModalType,
+	ModalTypeMap,
 } from './types';
 
-const modalTypeMap: Record<
-	ModalType,
-	{
-		visible: string;
-		onClose: string;
-	}
-> = {
+export const modalTypeMap: ModalTypeMap = {
 	modal: {
 		visible: 'open',
 		onClose: 'onCancel',
@@ -37,10 +32,10 @@ function resolveDefaultData<T>(data: T | (() => T)) {
 	return data;
 }
 
-function useCommonRef<P extends ModalType, T, U>(
+function useCommon<P extends ModalType, T, U>(
 	modalType: P,
 	ref: React.Ref<any>,
-	options: ModalRefOption<P, T, U>,
+	options: ModalHooksOption<P, T, U>,
 	defaultData: Partial<T> | (() => Partial<T>) = {},
 ) {
 	const [props, setProps] = useState<{
@@ -48,7 +43,7 @@ function useCommonRef<P extends ModalType, T, U>(
 			| false
 			| { resolve: (value: U) => void; reject: (reason: any) => void };
 		data: Partial<T>;
-		options: ModalRefOption<P, T, U>;
+		options: ModalHooksOption<P, T, U>;
 		promise: null | Promise<U> | PromiseLike<U>;
 	}>(() => ({
 		visible: false,
@@ -243,4 +238,8 @@ function useCommonRef<P extends ModalType, T, U>(
 	};
 }
 
-export default useCommonRef;
+export function mergeModalType(map: ModalTypeMap) {
+	return Object.assign(modalTypeMap, map);
+}
+
+export default useCommon;
