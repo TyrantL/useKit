@@ -1,9 +1,8 @@
 {
-	"name": "usekit",
+	"name": "lehooks",
 	"version": "1.0.0",
 	"description": "useful react hooks",
-	"main": "index.js",
-	"module": "dist/index.esm.js",
+	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"files": ["dist"],
 	"type": "module",
