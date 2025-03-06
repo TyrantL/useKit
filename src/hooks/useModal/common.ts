@@ -36,18 +36,18 @@ function useCommon<P extends ModalType, T, U>(
 	modalType: P,
 	ref: React.Ref<any>,
 	options: ModalHooksOption<P, T, U>,
-	defaultData: Partial<T> | (() => Partial<T>) = {},
+	defaultData: T | (() => T) = {} as T,
 ) {
 	const [props, setProps] = useState<{
 		visible:
 			| false
 			| { resolve: (value: U) => void; reject: (reason: any) => void };
-		data: Partial<T>;
+		data: T;
 		options: ModalHooksOption<P, T, U>;
 		promise: null | Promise<U> | PromiseLike<U>;
 	}>(() => ({
 		visible: false,
-		data: resolveDefaultData(defaultData),
+		data: resolveDefaultData(defaultData) as T,
 		options,
 		promise: null,
 	}));
@@ -65,7 +65,7 @@ function useCommon<P extends ModalType, T, U>(
 			get visible() {
 				return Boolean($refs.current.props.visible);
 			},
-			get data(): Partial<T> {
+			get data(): T {
 				return $refs.current.props.data;
 			},
 			get props() {
@@ -82,7 +82,7 @@ function useCommon<P extends ModalType, T, U>(
 				return $refs.current.props.options;
 			},
 
-			modal(newData: Partial<T> = {}): Promise<U> {
+			modal(newData: T): Promise<U> {
 				// biome-ignore lint/suspicious/noAsyncPromiseExecutor: <explanation>
 				const promise = new Promise<U>(async (resolve, reject) => {
 					if ($refs.current.props.visible) {
@@ -90,10 +90,8 @@ function useCommon<P extends ModalType, T, U>(
 					}
 
 					// 将传入的数据和defaultData合并赋值给newModalData
-					const defaultData = resolveDefaultData(
-						$refs.current.defaultData || {},
-					);
-					let newModalData: Partial<T> = {
+					const defaultData = resolveDefaultData($refs.current.defaultData);
+					let newModalData: T = {
 						...defaultData,
 						...newData,
 					};
@@ -105,7 +103,7 @@ function useCommon<P extends ModalType, T, U>(
 						let pauseResult: any;
 						let pause = false;
 
-						const pauseFn = (result: any, _isError?: boolean) => {
+						const pauseFn = (result: any) => {
 							pause = true;
 							pauseResult = result;
 						};
@@ -116,76 +114,77 @@ function useCommon<P extends ModalType, T, U>(
 						// 如果有result,将newModalData和result合并，防止传入的newData丢失
 						if (result && result !== newModalData) {
 							newModalData = {
-								...defaultData,
+								...newModalData,
 								...result,
 							};
 						}
 
 						// 如果beforeModal中调用了第二个参数，则视为希望暂停弹窗弹出
 						if (pause) {
-							reject(pauseResult);
+							return reject(pauseResult);
 						}
+					}
 
-						const closeFn = (
-							before: (next: () => void) => void,
-							action: ModalAction,
-						) => {
-							const close = async () => {
-								const _close = () => {
-									Object.assign($refs.current.props, {
-										visible: false,
-										promise: null,
-									});
-
-									setProps($refs.current.props);
-
-									setTimeout(() => {
-										afterCloseModal?.(this.data, action, this);
-									});
+					const closeFn = (
+						before: (next: () => void) => void,
+						action: ModalAction,
+					) => {
+						const close = async () => {
+							const _close = () => {
+								$refs.current.props = {
+									...$refs.current.props,
+									visible: false,
+									promise: null,
 								};
 
-								if (before) {
-									before(_close);
-								} else {
-									_close();
-								}
+								setProps($refs.current.props);
+
+								setTimeout(() => {
+									afterCloseModal?.(this.data, action, this);
+								});
 							};
 
-							const modalClose = () => {
-								if (beforeCloseModal) {
-									beforeCloseModal(close, action, this);
-								} else {
-									close();
-								}
-							};
-
-							modalClose();
+							if (before) {
+								before(_close);
+							} else {
+								_close();
+							}
 						};
 
-						Object.assign($refs.current.props, {
-							data: newModalData,
-							visible: {
-								resolve: (value: U) => {
-									return closeFn((next) => {
-										resolve(value);
-										next();
-									}, 'end');
-								},
-								reject: (reason: any) => {
-									closeFn((next) => {
-										reject(reason);
-										next();
-									}, 'cancel');
-								},
+						const modalClose = () => {
+							if (beforeCloseModal) {
+								beforeCloseModal(close, action, this);
+							} else {
+								close();
+							}
+						};
+
+						modalClose();
+					};
+					$refs.current.props = {
+						...$refs.current.props,
+						data: newModalData,
+						visible: {
+							resolve: (value: U) => {
+								return closeFn((next) => {
+									resolve(value);
+									next();
+								}, 'end');
 							},
-						});
+							reject: (reason: any) => {
+								closeFn((next) => {
+									reject(reason);
+									next();
+								}, 'cancel');
+							},
+						},
+					};
 
-						setProps({ ...$refs.current.props });
+					setProps({ ...$refs.current.props });
 
-						setTimeout(() => {
-							afterModal?.(newData);
-						});
-					}
+					setTimeout(() => {
+						afterModal?.(newModalData);
+					});
 				});
 
 				$refs.current.props.promise = promise;

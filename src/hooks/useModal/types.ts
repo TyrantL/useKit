@@ -12,10 +12,11 @@ export type ModalTypeMap = Record<
 
 export type ModalHooksOption<P extends ModalType, T, U> = {
 	beforeModal?: (
-		data: Partial<T>,
-		pause: (result: any, isError?: boolean) => void,
-	) => undefined | T | Promise<undefined | T>;
-	afterModal?: (data: Partial<T>) => void;
+		data: T,
+		pause: (result: any) => void,
+		// biome-ignore lint/suspicious/noConfusingVoidType: <explanation>
+	) => void | Partial<T> | Promise<void | Partial<T>>;
+	afterModal?: (data: T) => void;
 	beforeCloseModal?: (
 		next: () => void,
 		action: ModalAction,
@@ -39,14 +40,17 @@ export type ModalPropsTypeMap = {
 	};
 };
 
-export interface ModalRef<P extends ModalType, T, U> {
+export interface ModalActionType<T, U> {
+	modal: (newData: T) => Promise<U>;
+}
+
+export interface ModalRef<P extends ModalType, T, U>
+	extends ModalActionType<T, U> {
 	readonly visible: boolean;
-	readonly data: Partial<T>;
+	readonly data: T;
 	readonly props: ModalPropsTypeMap[P];
 	readonly options: ModalHooksOption<P, T, U>;
 	readonly modalPromise: null | Promise<U> | PromiseLike<U>;
-
-	modal(newData: T): Promise<U>;
 
 	endModal: (result: U) => void;
 	cancelModal: (reason: any) => void;
