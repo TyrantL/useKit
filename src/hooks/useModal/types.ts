@@ -53,5 +53,5 @@ export interface ModalRef<P extends ModalType, T, U>
 	readonly modalPromise: null | Promise<U> | PromiseLike<U>;
 
 	endModal: (result: U) => void;
-	cancelModal: (reason: any) => void;
+	cancelModal: (reason?: any) => void;
 }
