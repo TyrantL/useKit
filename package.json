@@ -1,16 +1,20 @@
 {
 	"name": "lehooks",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "useful react hooks",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"type": "module",
 	"scripts": {
 		"dev": "rollup -c -w",
 		"build": "rollup -c"
 	},
-	"keywords": ["react hooks"],
+	"keywords": [
+		"react hooks"
+	],
 	"author": "Leon",
 	"license": "ISC",
 	"devDependencies": {
